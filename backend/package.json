@@ -1,0 +1,43 @@
+{
+  "name": "mongodbserver",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "https": "node httpsServer.js",
+    "test": "node test.js",
+    "test:auth": "node tests/auth.test.js",
+    "test:message": "node tests/message.test.js",
+    "test:conversation": "node tests/conversation.test.js",
+    "test:socket": "node tests/socket.test.js",
+    "test:stream": "node tests/test-socket-stream.js",
+    "test:stream:complete": "node tests/test-socket-stream-complete.js",
+    "test:ai:stream": "node tests/test-ai-stream.js",
+    "test:real:ai:stream": "node tests/test-real-ai-stream.js",
+    "test:socket:ai:stream": "node tests/test-socket-ai-stream.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "axios": "^1.12.2",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "jwks-rsa": "^3.2.0",
+    "mongodb": "^6.18.0",
+    "mongoose": "^8.17.1",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "socket.io-stream": "^0.9.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^13.0.0",
+    "ws": "^8.18.3"
+  }
+}

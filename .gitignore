@@ -1,0 +1,24 @@
+# Dependencies
+*node_modules/
+
+backend/build
+backend/tests/*
+
+# Environment variables
+*.env
+
+# Logs
+*.log
+
+# SSL certificates (should not be committed)
+*.key
+*.pem
+*.crt
+
+# IDE files
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
