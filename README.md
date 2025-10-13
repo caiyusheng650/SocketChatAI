@@ -1,15 +1,32 @@
-# Labixiaoxin 智能对话平台
+# SocketAI 智能对话平台
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D14-brightgreen)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-4.4%2B-green)](https://www.mongodb.com/)
 [![React](https://img.shields.io/badge/React-19-blue)](https://reactjs.org/)
 
+## 应用名称建议
+
+基于项目的技术特点和功能，以下是一些适合的名称建议：
+
+1. **SocketChatAI** - 强调Socket实时通信和AI聊天功能
+2. **RealTimeChatAI** - 突出实时聊天和AI特性
+3. **StreamTalk** - 体现流式响应和对话交流
+4. **ChatStreamAI** - 结合聊天、流式响应和AI
+5. **SocketMind** - 暗示Socket通信和AI智能
+6. **QuickChatAI** - 强调快速响应和智能聊天
+7. **FlowChat** - 体现流畅的对话体验
+8. **InstantAI** - 突出即时响应和AI能力
+9. **WebStreamChat** - 强调Web端、流式响应和聊天
+10. **ConnectMind** - 暗示连接和智能交互
+
+这些名称都能很好地体现项目的核心功能和技术特点，您可以根据个人偏好选择合适的名称。
+
 一个基于AI的智能对话平台，提供实时消息交流、流式响应和对话管理功能。支持Markdown渲染、代码高亮和数学公式显示，为用户带来流畅的智能交互体验。
 
 ## 🚀 项目概述
 
-Labixiaoxin是一个全栈智能对话应用，结合了现代前端技术和强大的后端服务，为用户提供类似ChatGPT的交互体验。该项目采用前后端分离架构，支持实时消息流、多轮对话管理和AI响应生成。
+SocketAI是一个全栈智能对话应用，结合了现代前端技术和强大的后端服务，为用户提供类似ChatGPT的交互体验。该项目采用前后端分离架构，支持实时消息流、多轮对话管理和AI响应生成。
 
 ## 🎯 功能特性
 
@@ -53,8 +70,7 @@ Labixiaoxin是一个全栈智能对话应用，结合了现代前端技术和强
 
 ```bash
 # 克隆仓库
-git clone https://github.com/caiyusheng650/LabixiaoxinAI.git
-cd labixiaoxin
+git clone 
 ```
 
 ### 2. 安装后端依赖
