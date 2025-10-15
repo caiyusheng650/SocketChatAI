@@ -54,6 +54,7 @@ const VipSubscriptionModal = ({ open, onClose }) => {
   const [success, setSuccess] = useState('');
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [transactionHash, setTransactionHash] = useState(''); // 添加transactionHash状态
+  const [isWalletConnected, setIsWalletConnected] = useState(false); // 添加钱包连接状态
 
   // 创建一个新的关闭处理函数，用于在关闭时重置状态
   const handleClose = () => {
@@ -134,10 +135,17 @@ const VipSubscriptionModal = ({ open, onClose }) => {
     try {
       // 请求连接钱包
       await window.ethereum.request({ method: 'eth_requestAccounts' });
+      setIsWalletConnected(true); // 设置钱包连接状态为true
       setSuccess('钱包连接成功');
     } catch (err) {
       setError('连接钱包失败: ' + err.message);
     }
+  };
+
+  // 断开钱包连接
+  const disconnectWallet = () => {
+    setIsWalletConnected(false);
+    setSuccess('钱包已断开连接');
   };
 
   // 获取当前钱包地址
@@ -293,6 +301,20 @@ const VipSubscriptionModal = ({ open, onClose }) => {
   return (
     <Modal open={open} onClose={handleClose} aria-labelledby="vip-modal-title" aria-describedby="vip-modal-description">
       <Box sx={style}>
+        <style>
+          {`
+            @keyframes fadeInUp {
+              from {
+                opacity: 0;
+                transform: translateY(20px);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+          `}
+        </style>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Box display="flex" alignItems="center" gap={1.5}>
             <WalletIcon color="primary" />
@@ -300,21 +322,43 @@ const VipSubscriptionModal = ({ open, onClose }) => {
               VIP订阅中心
             </Typography>
           </Box>
-          <Button
-            onClick={onClose}
-            variant="text"
-            color="inherit"
-            sx={{
-              minWidth: 'auto',
-              padding: 1,
-              borderRadius: '50%',
-              '&:hover': {
-                backgroundColor: 'rgba(0, 0, 0, 0.04)'
-              }
-            }}
-          >
-            <CloseIcon />
-          </Button>
+          <Box display="flex" alignItems="center" gap={1}>
+            {!isWalletConnected ? (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={connectWallet}
+                startIcon={<WalletIcon />}
+                size="small"
+              >
+                连接钱包
+              </Button>
+            ) : (
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={disconnectWallet}
+                size="small"
+              >
+                断开连接
+              </Button>
+            )}
+            <Button
+              onClick={onClose}
+              variant="text"
+              color="inherit"
+              sx={{
+                minWidth: 'auto',
+                padding: 1,
+                borderRadius: '50%',
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                }
+              }}
+            >
+              <CloseIcon />
+            </Button>
+          </Box>
         </Box>
 
         {/* 错误提示框 */}
@@ -428,7 +472,8 @@ const VipSubscriptionModal = ({ open, onClose }) => {
               mb: 4,
               p: 3,
               borderRadius: 3,
-              border: '1px solid #e0e0e0'
+              border: '1px solid #e0e0e0',
+              animation: 'fadeInUp 0.5s ease-out'
             }}
           >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
