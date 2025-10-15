@@ -137,6 +137,7 @@ const VipSubscriptionModal = ({ open, onClose }) => {
       await window.ethereum.request({ method: 'eth_requestAccounts' });
       setIsWalletConnected(true); // 设置钱包连接状态为true
       setSuccess('钱包连接成功');
+      setError('');
     } catch (err) {
       setError('连接钱包失败: ' + err.message);
     }
@@ -271,6 +272,7 @@ const VipSubscriptionModal = ({ open, onClose }) => {
 
       if (result.success) {
         setSuccess('订阅成功！您的VIP权限已激活（续期）。');
+        setError('');
         setVipStatus({
           isVip: result.isVip,
           vipPlan: result.vipPlan,
