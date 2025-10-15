@@ -18,7 +18,8 @@ import {
   ListItemText,
   Divider,
   Tooltip,
-  Collapse
+  Collapse,
+  Snackbar
 } from '@mui/material';
 import {
   Check as CheckIcon,
@@ -50,19 +51,27 @@ const VipSubscriptionModal = ({ open, onClose }) => {
   const { user, token } = useAuth();
   const [vipStatus, setVipStatus] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [transactionHash, setTransactionHash] = useState(''); // 添加transactionHash状态
   const [isWalletConnected, setIsWalletConnected] = useState(false); // 添加钱包连接状态
+  const [paymentSuccess, setPaymentSuccess] = useState(false); // 支付成功状态
+  
+  // Snackbar状态
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('info');
 
   // 创建一个新的关闭处理函数，用于在关闭时重置状态
   const handleClose = () => {
-    // 重置success和error状态
-    setSuccess('');
-    setError('');
     // 调用原始的onClose函数
     onClose();
+  };
+  
+  // 处理提示消息的显示
+  const showSnackbar = (message, severity = 'info') => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
   };
   const plans = [
     {
@@ -109,12 +118,13 @@ const VipSubscriptionModal = ({ open, onClose }) => {
 
   const fetchVipStatus = async () => {
     setLoading(true);
-    setError('');
+    
     try {
+      setVipStatus(null); // 重置VIP状态
       const status = await getVipStatus(token);
       setVipStatus(status);
     } catch (err) {
-      setError('获取VIP状态失败: ' + err.message);
+      showSnackbar('获取VIP状态失败: ' + err.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -128,7 +138,7 @@ const VipSubscriptionModal = ({ open, onClose }) => {
   // 连接MetaMask钱包
   const connectWallet = async () => {
     if (!isMetaMaskInstalled()) {
-      setError('请先安装MetaMask钱包');
+      showSnackbar('请先安装MetaMask钱包', 'error');
       return;
     }
 
@@ -136,17 +146,16 @@ const VipSubscriptionModal = ({ open, onClose }) => {
       // 请求连接钱包
       await window.ethereum.request({ method: 'eth_requestAccounts' });
       setIsWalletConnected(true); // 设置钱包连接状态为true
-      setSuccess('钱包连接成功');
-      setError('');
+      showSnackbar('钱包连接成功', 'success');
     } catch (err) {
-      setError('连接钱包失败: ' + err.message);
+      showSnackbar('连接钱包失败: ' + err.message, 'error');
     }
   };
 
   // 断开钱包连接
   const disconnectWallet = () => {
     setIsWalletConnected(false);
-    setSuccess('钱包已断开连接');
+    showSnackbar('钱包已断开连接', 'info');
   };
 
   // 获取当前钱包地址
@@ -251,13 +260,15 @@ const VipSubscriptionModal = ({ open, onClose }) => {
   // 处理订阅
   const handleSubscribe = async (planId) => {
     if (!user || !token) {
-      setError('请先登录');
+      showSnackbar('请先登录', 'error');
+      return;
+    }
+    if(!isWalletConnected) {
+      showSnackbar('请先连接钱包', 'error');
       return;
     }
 
     setLoading(true);
-    setError('');
-    setSuccess('');
     setSelectedPlan(planId);
 
     try {
@@ -271,8 +282,15 @@ const VipSubscriptionModal = ({ open, onClose }) => {
       const result = await subscribeVip(planId, txHash, token);
 
       if (result.success) {
-        setSuccess('订阅成功！您的VIP权限已激活（续期）。');
-        setError('');
+        // 显示支付成功动画
+        setPaymentSuccess(true);
+        
+        // 3秒后隐藏动画
+        setTimeout(() => {
+          setPaymentSuccess(false);
+          showSnackbar('订阅成功！您的VIP权限已激活（续期）。', 'success');
+        }, 3000);
+        
         setVipStatus({
           isVip: result.isVip,
           vipPlan: result.vipPlan,
@@ -282,7 +300,7 @@ const VipSubscriptionModal = ({ open, onClose }) => {
         throw new Error('订阅失败');
       }
     } catch (err) {
-      setError(err.message);
+      showSnackbar(err.message, 'error');
     } finally {
       setLoading(false);
       setSelectedPlan(null);
@@ -308,7 +326,7 @@ const VipSubscriptionModal = ({ open, onClose }) => {
             @keyframes fadeInUp {
               from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(-20px);
               }
               to {
                 opacity: 1;
@@ -317,6 +335,231 @@ const VipSubscriptionModal = ({ open, onClose }) => {
             }
           `}
         </style>
+        
+        {/* 支付成功全屏动画 */}
+        {paymentSuccess && (
+          <>
+            {/* 全屏背景遮罩 */}
+            <Box
+              sx={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                zIndex: 9998,
+                animation: 'fadeInBackground 0.5s ease-in-out',
+              }}
+            />
+            
+            {/* 动画内容 */}
+            <Box
+              sx={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 9999,
+                animation: 'fadeIn 0.6s ease-in-out',
+              }}
+            >
+              <style>
+                {`
+                  @keyframes fadeIn {
+                    from { opacity: 0; transform: scale(0.8); }
+                    to { opacity: 1; transform: scale(1); }
+                  }
+                  @keyframes fadeInBackground {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                  }
+                  @keyframes pulse {
+                    0% { transform: scale(1); }
+                    50% { transform: scale(1.2); }
+                    100% { transform: scale(1); }
+                  }
+                  @keyframes float {
+                    0% { transform: translateY(0px); }
+                    50% { transform: translateY(-20px); }
+                    100% { transform: translateY(0px); }
+                  }
+                  @keyframes scaleUp {
+                    0% { transform: scale(0); }
+                    60% { transform: scale(1.2); }
+                    100% { transform: scale(1); }
+                  }
+                  @keyframes rotate {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                  }
+                  @keyframes fillCircle {
+                    0% { clip-path: polygon(50% 50%, 50% 0%, 50% 0%, 50% 0%); }
+                    25% { clip-path: polygon(50% 50%, 50% 0%, 100% 0%, 100% 0%); }
+                    50% { clip-path: polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%); }
+                    75% { clip-path: polygon(50% 50%, 50% 0%, 100% 0%, 0% 100%); }
+                    100% { clip-path: polygon(50% 50%, 50% 0%, 100% 0%, 0% 50%); }
+                  }
+                  @keyframes drawCheck {
+                    0% { opacity: 0; transform: scale(0.2); }
+                    50% { opacity: 1; transform: scale(1.1); }
+                    100% { opacity: 1; transform: scale(1); }
+                  }
+                  .success-icon {
+                    animation: pulse 1.5s infinite ease-in-out;
+                  }
+                  .success-text {
+                    animation: float 2s infinite ease-in-out;
+                  }
+                  .scale-up {
+                    animation: scaleUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                  }
+                  .rotate-circle {
+                    animation: rotate 15s linear infinite;
+                  }
+                `}
+              </style>
+              
+              {/* 旋转背景圆圈 */}
+              <Box 
+                sx={{
+                  position: 'absolute',
+                  width: 900,
+                  height: 900,
+                  borderRadius: '50%',
+                  border: '8px dashed rgba(76, 175, 80, 0.3)',
+                  className: 'rotate-circle'
+                }}
+              />
+              
+              {/* 成功图标容器 */}
+              <Box 
+                sx={{ 
+                  position: 'relative',
+                  width: 200,
+                  height: 200,
+                  mb: 6,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  className: 'scale-up'
+                }}
+              >
+                {/* 外层光环 */}
+                <Box 
+                  sx={{
+                    position: 'absolute',
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '50%',
+                    background: 'conic-gradient(transparent, rgba(76, 175, 80, 0.8), transparent)',
+                    animation: 'rotate 2s linear infinite',
+                    filter: 'blur(5px)'
+                  }}
+                />
+                
+                {/* 内层光环 */}
+                <Box 
+                  sx={{
+                    position: 'absolute',
+                    width: '90%',
+                    height: '90%',
+                    borderRadius: '50%',
+                    background: 'conic-gradient(transparent, rgba(76, 175, 80, 0.6), transparent)',
+                    animation: 'rotate 3s linear infinite reverse',
+                    filter: 'blur(3px)'
+                  }}
+                />
+                
+                {/* 主圆圈 */}
+                <Box 
+                  sx={{ 
+                    position: 'relative',
+                    backgroundColor: 'success.main', 
+                    borderRadius: '50%', 
+                    width: 180,
+                    height: 180,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 15px 40px rgba(76, 175, 80, 0.4), 0 0 0 20px rgba(76, 175, 80, 0.2), 0 0 0 40px rgba(76, 175, 80, 0.1)',
+                    zIndex: 1,
+                    overflow: 'hidden'
+                  }}
+                >
+                  {/* 打勾动画路径 */}
+                  <Box 
+                    sx={{
+                      position: 'absolute',
+                      width: '100%',
+                      height: '100%',
+                      borderRadius: '50%',
+                      clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)',
+                      animation: 'fillCircle 1.5s ease-in-out forwards'
+                    }}
+                  />
+                  
+                  {/* 打勾图标 */}
+                  <CheckIcon 
+                    sx={{ 
+                      color: 'white', 
+                      fontSize: 100,
+                      zIndex: 2,
+                      animation: 'drawCheck 1s 0.5s ease-in-out forwards',
+                      opacity: 0
+                    }} 
+                  />
+                </Box>
+              </Box>
+              
+              {/* 文字内容 */}
+              <Typography 
+                variant="h2" 
+                color="white" 
+                fontWeight="bold"
+                className="success-text"
+                sx={{ 
+                  mb: 4,
+                  textShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+                  fontSize: { xs: '2.5rem', md: '4rem' }
+                }}
+              >
+                支付成功！
+              </Typography>
+              <Typography 
+                variant="h5" 
+                color="white"
+                sx={{ 
+                  mb: 6,
+                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+                  fontSize: { xs: '1.2rem', md: '1.8rem' }
+                }}
+              >
+                您已成功订阅VIP服务
+              </Typography>
+              
+             
+              
+              {/* 底部装饰光效 */}
+              <Box 
+                sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  width: '100%',
+                  height: 200,
+                  background: 'linear-gradient(180deg, transparent, rgba(76, 175, 80, 0.2))',
+                  filter: 'blur(30px)'
+                }}
+              />
+            </Box>
+          </>
+        )}
+        
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Box display="flex" alignItems="center" gap={1.5}>
             <WalletIcon color="primary" />
@@ -338,7 +581,7 @@ const VipSubscriptionModal = ({ open, onClose }) => {
             ) : (
               <Button
                 variant="outlined"
-                color="secondary"
+                color="primary"
                 onClick={disconnectWallet}
                 size="small"
               >
@@ -363,226 +606,140 @@ const VipSubscriptionModal = ({ open, onClose }) => {
           </Box>
         </Box>
 
-        {/* 错误提示框 */}
-        <Collapse in={!!error}>
-          <Alert
-            severity="error"
-            sx={{
-              mb: 3,
-              borderRadius: 2,
-              boxShadow: 1,
-              '& .MuiAlert-icon': {
-                fontSize: 20
-              }
-            }}
-            icon={<WarningIcon color="error" size="medium" />}
-          >
-            {error}
-          </Alert>
-        </Collapse>
-
-        {/* 成功提示框 */}
-        <Collapse in={!!success}>
-          <Alert
-            severity="success"
-            sx={{
-              mb: 3,
-              borderRadius: 2,
-              boxShadow: 1,
-              alignItems: 'flex-start',
-            }}
-            icon={<CheckIcon color="success" size="medium" />}
-          >
-            <Typography variant="body1" component="div">
-              {success}
-              {success.includes('订阅成功') && transactionHash && (
-                <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-                  {/* 交易哈希和Etherscan链接 */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                    <Typography variant="body2" sx={{ wordBreak: 'break-all', mr: 1 }}>
-                      交易哈希:
-                    </Typography>
-                    <Tooltip 
-                      title={transactionHash} 
-                      placement="right"
-                      componentsProps={{
-                        tooltip: {
-                          sx: {
-                            maxWidth: 'none',
-                            whiteSpace: 'nowrap'
-                          }
-                        }
-                      }}
-                    >
-                      <a
-                        href={`https://sepolia.etherscan.io/tx/${transactionHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          color: '#1976d2',
-                          textDecoration: 'none',
-                          fontWeight: 'bold',
-                          fontSize: '0.875rem',
-                          border: '1px solid #1976d2',
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          backgroundColor: '#fff',
-                          cursor: 'pointer'
-                        }}
-                        onMouseOver={(e) => e.target.style.backgroundColor = '#e3f2fd'}
-                        onMouseOut={(e) => e.target.style.backgroundColor = '#fff'}
-                      >
-                        在Etherscan上查看
-                      </a>
-                    </Tooltip>
-                  </Box>
-                </Box>
-              )}
-            </Typography>
-          </Alert>
-        </Collapse>
-        
-
-        <Collapse in={!!loading}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              my: 3,
-              py: 2,
-              backgroundColor: 'rgba(245, 245, 245, 0.7)',
-              borderRadius: 2,
-              border: '1px solid rgba(0, 0, 0, 0.05)'
-            }}
-          >
-            <CircularProgress sx={{ mb: 2 }} color="primary" />
-            <Typography variant="body2" color="text.secondary">
-              正在处理，请稍候...
-            </Typography>
-          </Box>
-        </Collapse>
-
-
 
         {/* VIP状态和特权卡片 */}
-        {vipStatus && (
-          <Paper
-            elevation={2}
-            sx={{
-              mb: 4,
-              p: 3,
-              borderRadius: 3,
-              border: '1px solid #e0e0e0',
-              animation: 'fadeInUp 0.5s ease-out'
-            }}
-          >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-              <Typography variant="h6" fontWeight="bold">
-                当前账户状态
-              </Typography>
-
-              {vipStatus.isVip ? (
-                <Chip
-                  label="VIP用户"
-                  color="success"
-                  icon={<VerifiedIcon />}
-                  sx={{ fontWeight: 'bold' }}
-                />
-              ) : (
-                <Chip
-                  label="标准用户"
-                  color="default"
-                  icon={<WarningIcon />}
-                />
-              )}
-            </Box>
-
-            <Divider sx={{ mb: 3 }} />
-
-            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4 }}>
-              {/* 账户详情区 */}
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 500, color: 'text.secondary' }}>
-                  账户详情
+        <Paper
+          elevation={vipStatus ? 2 : 0}
+          sx={{
+            mb: 4,
+            p: 3,
+            borderRadius: 3,
+            border: '1px solid #e0e0e0',
+            backgroundColor: vipStatus ? 'white' : '#f5f5f5',
+            minHeight: vipStatus ? 'auto' : '300px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: vipStatus ? 'flex-start' : 'center',
+            opacity: vipStatus ? 1 : 0.7,
+          }}
+        >
+          {vipStatus ? (
+            <>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, width: '100%' }}>
+                <Typography variant="h6" fontWeight="bold">
+                  当前账户状态
                 </Typography>
 
-                <Box sx={{ display: 'grid', gap: 2 }}>
-                  {vipStatus.isVip ? (
-                    <>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, mt: 2 }}>
-                        <Typography variant="body2" color="text.secondary">有效期至:</Typography>
-                        <Typography variant="body1" fontWeight="bold">{formatDate(vipStatus.vipEndDate)}</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                        <Typography variant="body2" color="text.secondary">距离到期:</Typography>
-                        <Typography variant="body1" fontWeight="bold">
-                          {Math.ceil((new Date(vipStatus.vipEndDate) - new Date()) / (1000 * 60 * 60 * 24))} 天
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
-                        <Typography variant="body2" color="text.secondary">账户状态:</Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <VerifiedIcon size="small" sx={{ color: '#2e7d32' }} />
-                          <Typography variant="body1" fontWeight="bold" color="success.main">
-                            VIP特权已激活
+                {vipStatus.isVip ? (
+                  <Chip
+                    label="VIP用户"
+                    color="success"
+                    icon={<VerifiedIcon />}
+                    sx={{ fontWeight: 'bold' }}
+                  />
+                ) : (
+                  <Chip
+                    label="标准用户"
+                    color="default"
+                    icon={<WarningIcon />}
+                  />
+                )}
+              </Box>
+
+              <Divider sx={{ mb: 3, width: '100%' }} />
+
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4, width: '100%' }}>
+                {/* 账户详情区 */}
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 500, color: 'text.secondary' }}>
+                    账户详情
+                  </Typography>
+
+                  <Box sx={{ display: 'grid', gap: 2 }}>
+                    {vipStatus.isVip ? (
+                      <>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, mt: 2 }}>
+                          <Typography variant="body2" color="text.secondary">有效期至:</Typography>
+                          <Typography variant="body1" fontWeight="bold">{formatDate(vipStatus.vipEndDate)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                          <Typography variant="body2" color="text.secondary">距离到期:</Typography>
+                          <Typography variant="body1" fontWeight="bold">
+                            {Math.ceil((new Date(vipStatus.vipEndDate) - new Date()) / (1000 * 60 * 60 * 24))} 天
                           </Typography>
                         </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+                          <Typography variant="body2" color="text.secondary">账户状态:</Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <VerifiedIcon size="small" sx={{ color: '#2e7d32' }} />
+                            <Typography variant="body1" fontWeight="bold" color="success.main">
+                              VIP特权已激活
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </>
+                    ) : (
+                      <Box sx={{ textAlign: 'left', py: 2 }}>
+                        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                          升级为VIP用户，享受更多特权功能
+                        </Typography>
+                        <Button
+                          variant="outlined"
+                          color="primary"
+                          size="small"
+                          onClick={() => document.getElementById('subscription-plans').scrollIntoView({ behavior: 'smooth' })}
+                        >
+                          查看订阅计划
+                        </Button>
                       </Box>
-                    </>
-                  ) : (
-                    <Box sx={{ textAlign: 'left', py: 2 }}>
-                      <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                        升级为VIP用户，享受更多特权功能
-                      </Typography>
-                      <Button
-                        variant="outlined"
-                        color="primary"
-                        size="small"
-                        onClick={() => document.getElementById('subscription-plans').scrollIntoView({ behavior: 'smooth' })}
-                      >
-                        查看订阅计划
-                      </Button>
-                    </Box>
-                  )}
+                    )}
+                  </Box>
+                </Box>
+
+                {/* VIP特权区 */}
+                <Box sx={{ flex: 1, borderLeft: { md: '1px solid #e0e0e0' }, pl: { md: 4 } }}>
+                  <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 500, color: 'text.secondary' }}>
+                    VIP特权
+                  </Typography>
+
+                  <Box sx={{ display: 'grid', gap: 2 }}>
+                    {vipBenefits.map((benefit, index) => (
+                      <Box key={index} display="flex" alignItems="center" gap={2}>
+                        <Box sx={{
+                          p: 1,
+                          borderRadius: '50%',
+                          color: 'primary.main'
+                        }}>
+                          {benefit.icon}
+                        </Box>
+                        <Typography variant="body2">{benefit.text}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
+
+                  <Box sx={{ mt: 4 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      • 所有订阅均使用Sepolia测试网络ETH进行支付
+                    </Typography>
+                    
+                    <Typography variant="caption" color="text.secondary" component="div">
+                      • 订阅成功后，您的VIP权限将立即生效
+                    </Typography>
+                  </Box>
                 </Box>
               </Box>
-
-              {/* VIP特权区 */}
-              <Box sx={{ flex: 1, borderLeft: { md: '1px solid #e0e0e0' }, pl: { md: 4 } }}>
-                <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 500, color: 'text.secondary' }}>
-                  VIP特权
-                </Typography>
-
-                <Box sx={{ display: 'grid', gap: 2 }}>
-                  {vipBenefits.map((benefit, index) => (
-                    <Box key={index} display="flex" alignItems="center" gap={2}>
-                      <Box sx={{
-                        p: 1,
-                        borderRadius: '50%',
-                        color: 'primary.main'
-                      }}>
-                        {benefit.icon}
-                      </Box>
-                      <Typography variant="body2">{benefit.text}</Typography>
-                    </Box>
-                  ))}
-                </Box>
-
-                <Box sx={{ mt: 4 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    • 所有订阅均使用Sepolia测试网络ETH进行支付
-                  </Typography>
-                  
-                  <Typography variant="caption" color="text.secondary" component="div">
-                    • 订阅成功后，您的VIP权限将立即生效
-                  </Typography>
-                </Box>
-              </Box>
+            </>
+          ) : (
+            <Box sx={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+              <CircularProgress size={83} sx={{ color: '#757575' }} />
+              <Typography variant="h6" color="#757575" sx={{ mt: 2 }}>
+                查询中...
+              </Typography>
+              
             </Box>
-          </Paper>
-        )}
+          )}
+        </Paper>
 
 
 
@@ -685,6 +842,21 @@ const VipSubscriptionModal = ({ open, onClose }) => {
             ))}
           </Box>
         </Box>
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={6000}
+          onClose={() => setSnackbarOpen(false)}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert
+            onClose={() => setSnackbarOpen(false)}
+            severity={snackbarSeverity}
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
       </Box>
     </Modal>
   );
