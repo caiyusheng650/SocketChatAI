@@ -14,15 +14,19 @@ import {
   Login as LoginIcon,
   Logout as LogoutIcon,
   AccountCircle as AccountIcon,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  WorkspacePremium as VipIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import LoginModal from './LoginModal';
+import VipSubscriptionModal from './VipSubscriptionModal';
 
 const AuthButton = ({ collapsed }) => {
   const { user, logout } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+  const [vipModalOpen, setVipModalOpen] = useState(false);
   
   const open = Boolean(anchorEl);
   
@@ -45,6 +49,24 @@ const AuthButton = ({ collapsed }) => {
   const handleLogoutClick = () => {
     logout();
     handleMenuClose();
+  };
+  
+  const handleSettingsClick = () => {
+    handleMenuClose();
+    setSettingsModalOpen(true);
+  };
+  
+  const handleVipSubscriptionClick = () => {
+    handleMenuClose();
+    setVipModalOpen(true);
+  };
+  
+  const handleSettingsModalClose = () => {
+    setSettingsModalOpen(false);
+  };
+  
+  const handleVipModalClose = () => {
+    setVipModalOpen(false);
   };
   
   const handleLoginModalClose = () => {
@@ -187,11 +209,12 @@ const AuthButton = ({ collapsed }) => {
             </ListItemText>
           </MenuItem>
           <Divider />
-          <MenuItem>
+          
+          <MenuItem onClick={handleVipSubscriptionClick}>
             <ListItemIcon>
-              <SettingsIcon fontSize="small" />
+              <VipIcon fontSize="small" />
             </ListItemIcon>
-            账户设置
+            订阅
           </MenuItem>
           <MenuItem onClick={handleLogoutClick}>
             <ListItemIcon>
@@ -206,6 +229,14 @@ const AuthButton = ({ collapsed }) => {
       <LoginModal 
         open={loginModalOpen} 
         onClose={handleLoginModalClose} 
+      />
+      
+     
+      
+      {/* VIP订阅模态框 */}
+      <VipSubscriptionModal
+        open={vipModalOpen}
+        onClose={handleVipModalClose}
       />
     </>
   );

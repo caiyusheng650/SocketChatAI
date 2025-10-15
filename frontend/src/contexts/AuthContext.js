@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import { registerUser, loginUser } from '../services/api';
+import { registerUser, loginUser, updateUser as updateUserApi } from '../services/api';
 
 // 创建认证上下文
 const AuthContext = createContext();
@@ -114,6 +114,35 @@ export const AuthProvider = ({ children }) => {
     return localStorage.getItem('token');
   };
 
+  // 更新用户信息
+  const updateUser = async (userData) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('用户未登录');
+      }
+      
+      // 调用API更新用户信息
+      const updatedUser = await updateUserApi(userData, token);
+      
+      // 更新本地存储和状态
+      const newUser = { ...user, ...updatedUser };
+      setUser(newUser);
+      localStorage.setItem('user', JSON.stringify(newUser));
+      
+      return { success: true, user: newUser };
+    } catch (err) {
+      const errorMessage = err.message || '更新用户信息失败';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 认证上下文值
   const value = {
     user,
@@ -124,7 +153,8 @@ export const AuthProvider = ({ children }) => {
     register,
     login,
     logout,
-    getToken
+    getToken,
+    updateUser
   };
 
   return (

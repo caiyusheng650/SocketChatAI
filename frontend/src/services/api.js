@@ -155,3 +155,46 @@ export const sendMessageToAI = async (messageData, token) => {
   
   return handleResponse(response);
 };
+
+// 更新用户信息
+export const updateUser = async (userData, token) => {
+  const response = await fetch(`${API_BASE_URL}/api/auth/update`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(userData),
+    credentials: 'include'
+  });
+  
+  return handleResponse(response);
+};
+
+// 获取用户VIP状态
+export const getVipStatus = async (token) => {
+  const response = await fetch(`${API_BASE_URL}/api/vip/status`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    credentials: 'include'
+  });
+  
+  return handleResponse(response);
+};
+
+// 订阅VIP
+export const subscribeVip = async (plan, transactionHash, token) => {
+  const response = await fetch(`${API_BASE_URL}/api/vip/subscribe`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ plan, transactionHash }),
+    credentials: 'include'
+  });
+  
+  return handleResponse(response);
+};

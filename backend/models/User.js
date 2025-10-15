@@ -30,6 +30,20 @@ const userSchema = new mongoose.Schema({
   },
   lastLogin: {
     type: Date
+  },
+  // VIP相关字段
+  isVip: {
+    type: Boolean,
+    default: false
+  },
+  vipPlan: {
+    type: String,
+    enum: ['1month', '3months', '6months'],
+    default: null
+  },
+  vipEndDate: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true

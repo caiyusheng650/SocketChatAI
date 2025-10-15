@@ -15,6 +15,7 @@ const jwt = require('jsonwebtoken');
 const authRoutes = require('./routes/authRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const conversationRoutes = require('./routes/conversationRoutes');
+const vipRoutes = require('./routes/vipRoutes');
 
 // 服务导入
 const MessageService = require('./services/messageService');
@@ -87,6 +88,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/conversations', conversationRoutes);
+app.use('/api/vip', vipRoutes);
 
 // 创建HTTP服务器（暂时禁用HTTPS）
 const server = http.createServer(app);

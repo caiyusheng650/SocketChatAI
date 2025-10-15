@@ -2,40 +2,9 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const dbService = require('../services/dbService');
 const rateLimit = require('express-rate-limit');
+const { authenticateToken } = require('../middleware/authMiddleware');
 
 const router = express.Router();
-
-// 验证JWT令牌的中间件
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-  
-  if (!token) {
-    return res.status(401).json({ error: '访问令牌缺失' });
-  }
-  
-  jwt.verify(token, process.env.JWT_SECRET, async (err, user) => {
-    if (err) {
-      return res.status(403).json({ error: '访问令牌无效' });
-    }
-    
-    // 将用户信息添加到请求对象中
-    req.user = user;
-    
-    // 尝试从数据库获取完整的用户信息
-    try {
-      const fullUser = await dbService.findUserById(user.userId);
-      if (fullUser) {
-        req.user = { ...user, ...fullUser.toObject() };
-      }
-    } catch (dbError) {
-      // 如果数据库查询失败，使用JWT中的信息
-      console.warn('无法获取完整用户信息:', dbError.message);
-    }
-    
-    next();
-  });
-};
 
 // 注册限流器 - 限制注册请求频率
 const registerLimiter = rateLimit({
@@ -174,4 +143,33 @@ router.get('/me', authenticateToken, async (req, res) => {
   }
 });
 
+// 更新用户信息
+router.put('/update', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const updates = req.body;
+    
+    // 不允许直接更新密码
+    if (updates.password) {
+      delete updates.password;
+    }
+    
+    // 更新用户信息
+    const updatedUser = await dbService.updateUser(userId, updates);
+    
+    // 返回更新后的用户信息（不包含密码等敏感信息）
+    const { password: _, ...userWithoutPassword } = updatedUser.toObject();
+    res.json({
+      user: userWithoutPassword,
+      success: true
+    });
+    
+    console.log('用户信息更新成功:', userWithoutPassword);
+  } catch (error) {
+    console.error('更新用户信息时出错:', error);
+    res.status(500).json({ error: '更新用户信息失败' });
+  }
+});
+
 module.exports = router;
+module.exports.authenticateToken = authenticateToken;
