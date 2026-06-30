@@ -1,11 +1,13 @@
 import React from 'react';
 import MarkdownIt from 'markdown-it';
 import texmath from 'markdown-it-texmath';
+import katex from 'katex';  // 需要安装 katex
 import hljs from 'highlight.js';
 import 'katex/dist/katex.min.css';
 import 'highlight.js/styles/default.css';
 import './MarkdownWithLatex.css';
 
+// 正确配置 texmath 使用 KaTeX
 const md = new MarkdownIt({
   html: true,
   linkify: true,
@@ -18,7 +20,15 @@ const md = new MarkdownIt({
     }
     return '';
   },
-}).use(texmath);
+}).use(texmath, {
+  engine: katex,  // 指定使用 KaTeX
+  delimiters: 'dollars',  // 使用 $...$ 和 $$...$$
+  katexOptions: {
+    macros: {
+      "\\RR": "\\mathbb{R}"
+    }
+  }
+});
 
 const MarkdownWithLatex = ({ markdownContent }) => {
   const html = md.render(markdownContent);
