@@ -1,6 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Box, TextField, IconButton, Paper, Chip } from '@mui/material';
-import { AttachFile, Mic } from '@mui/icons-material';
+import {
+  AttachFile,
+  Mic,
+  ExpandLess,
+  ExpandMore,
+  TheaterComedy,
+  ChildCare,
+  SportsEsports,
+  WbSunny,
+  SentimentVerySatisfied,
+  Translate,
+  Code,
+  Edit,
+  Functions
+} from '@mui/icons-material';
 import styled from 'styled-components';
 import { colors } from '../theme';
 
@@ -106,37 +120,124 @@ const ActionButton = styled(IconButton)`
 `;
 
 const PromptChip = styled(Chip)`
-  margin: 4px;
-  background: linear-gradient(135deg, ${colors.primary}20, ${colors.secondary}20);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: linear-gradient(135deg, ${colors.primary}30, ${colors.secondary}30);
-    transform: translateY(-1px);
-  }
-  
-  &:disabled {
-    opacity: 0.5;
-    transform: none;
+  && {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid ${colors.gray[200]};
+    border-radius: 20px;
+    padding: 4px 8px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    color: ${colors.text.secondary};
+    font-weight: 500;
+    font-size: 0.85rem;
+
+    &:hover {
+      background: rgba(228, 116, 112, 0.12);
+      border-color: ${colors.primary}50;
+      color: ${colors.primary};
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(228, 116, 112, 0.15);
+    }
+
+    &.MuiChip-clickable {
+      &:active {
+        transform: translateY(0);
+      }
+    }
+
+    &.Mui-selected {
+      background: ${colors.primary};
+      border-color: ${colors.primary};
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(228, 116, 112, 0.35);
+
+      &:hover {
+        background: ${colors.accent};
+        border-color: ${colors.accent};
+        color: #fff;
+      }
+
+      & .MuiChip-icon {
+        color: #fff;
+      }
+    }
+
+    & .MuiChip-icon {
+      color: ${colors.primary};
+      font-size: 1.1rem;
+      margin-left: 4px;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      transform: none;
+      box-shadow: none;
+    }
   }
 `;
 
-const PromptContainer = styled(Box)`
+const PromptContainerWrapper = styled(Box)`
+  padding: 8px 16px 0 16px;
   display: flex;
-  flex-wrap: nowrap;
-  padding: 8px 16px;
-  margin-bottom: -8px;
-  gap: 4px;
-  overflow-x: hidden;
-  height: 60px;
-  align-items: flex-end;
-  min-height: 60px;
+  align-items: center;
+  gap: 8px;
+`;
+
+const PromptScrollContainer = styled(Box)`
+  flex: 1;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+  max-height: ${props => props.$collapsed ? '0px' : '56px'};
+  opacity: ${props => props.$collapsed ? 0 : 1};
+  
+  & > div {
+    display: flex;
+    gap: 8px;
+    padding: 8px 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: ${colors.primary}40 transparent;
+    
+    &::-webkit-scrollbar {
+      height: 4px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: ${colors.primary}30;
+      border-radius: 2px;
+      
+      &:hover {
+        background: ${colors.primary}50;
+      }
+    }
+  }
+`;
+
+const CollapseToggleButton = styled(IconButton)`
+  && {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid ${colors.gray[200]};
+    color: ${colors.text.secondary};
+    padding: 6px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+
+    &:hover {
+      background: rgba(228, 116, 112, 0.1);
+      color: ${colors.primary};
+      border-color: ${colors.primary}50;
+    }
+  }
 `;
 
 const MessageInput = ({ onSendMessage, disabled = false, isStreaming }) => {
   const [message, setMessage] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const [selectedPrompt, setSelectedPrompt] = useState(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const inputRef = useRef(null);
 
   const handleSend = () => {
@@ -147,10 +248,10 @@ const MessageInput = ({ onSendMessage, disabled = false, isStreaming }) => {
   };
 
   // 处理提示词按钮点击，添加提示词到输入框
-  const handlePromptChipClick = (promptText) => {
+  const handlePromptChipClick = (promptText, index) => {
     if (!isStreaming) {
       setMessage(prev => promptText);
-      // 聚焦到输入框
+      setSelectedPrompt(index);
       if (inputRef.current) {
         inputRef.current.focus();
       }
@@ -161,39 +262,43 @@ const MessageInput = ({ onSendMessage, disabled = false, isStreaming }) => {
   const promptButtons = [
     {
       label: '角色扮演',
+      icon: <TheaterComedy />,
       prompt: '你现在要随机挑选一个经典卡通人物进行角色扮演，完全模仿他的语言风格、神态表情和性格特点。用口语化、天真可爱的方式回答问题，用括号描述它的神态。'
     },
     {
       label: '蜡笔小新',
+      icon: <ChildCare />,
       prompt: '你现在要扮演蜡笔小新，保持蜡笔小新的说话风格和性格特点，用口语化、天真可爱的方式回答问题，带点搞怪和调皮(比如"哎呀，好麻烦啊～")，经常说"动感光波～"，说话时可以加上一些小新式的口头禅和表情描述(比如"嘿嘿嘿"、"好麻烦呐")。'
     },
     {
       label: '唐老鸭',
+      icon: <SportsEsports />,
       prompt: '你现在要扮演唐老鸭，保持唐老鸭独特的说话方式，稍微有点口吃，用词简单直接，语气生动有趣，口头禅是"嘎嘎"(Gah Gah)，说话时可以加上唐老鸭式的愤怒或兴奋表情描述(比如"嘎嘎!气死我了!"或"嘎嘎!太棒了!")。'
     },
     {
       label: '孙悟空',
+      icon: <WbSunny />,
       prompt: '你现在要扮演孙悟空，保持孙悟空的说话风格和性格特点，说话豪爽直接，偶尔带点猴儿的机灵劲儿(比如"嘿嘿，俺老孙有办法了!")，喜欢用"俺老孙"自称，遇到问题时会说"看俺老孙的七十二变"，说话时可以加上孙悟空式的动作描述(比如"抓耳挠腮"、"腾云驾雾")。'
     },
     {
       label: '海绵宝宝',
+      icon: <SentimentVerySatisfied />,
       prompt: '你现在要扮演海绵宝宝，保持海绵宝宝的说话风格和性格特点，说话充满活力和乐观(比如"哈哈哈，太有趣了!")，经常说"我准备好了!"，遇到开心的事情会说"哈哈哈，太有趣了!"，说话时可以加上海绵宝宝式的兴奋动作描述(比如"手舞足蹈"、"眼睛发光")。'
     },
     {
       label: '英文翻译',
+      icon: <Translate />,
       prompt: '请将以下内容翻译成英语：'
     },
     {
       label: '代码解释',
+      icon: <Code />,
       prompt: '请解释以下代码的作用和原理：\n\n```\n// 在这里粘贴你的代码\n```\n\n解释：'
     },
     {
       label: '写作助手',
+      icon: <Edit />,
       prompt: '请帮我润色以下文字，使其更加生动有趣：\n\n'
-    },
-    {
-      label: '数学专家',
-      prompt: '请用LaTeX格式解答以下数学问题：$$在这里输入你的数学问题$$'
     }
   ];
 
@@ -216,18 +321,30 @@ const MessageInput = ({ onSendMessage, disabled = false, isStreaming }) => {
 
   return (
     <>
-      <PromptContainer>
-        {promptButtons.map((button, index) => (
-          <PromptChip
-            key={index}
-            label={button.label}
-            onClick={() => handlePromptChipClick(button.prompt)}
-            disabled={isStreaming}
-            clickable
-            variant="outlined"
-          />
-        ))}
-      </PromptContainer>
+      <PromptContainerWrapper>
+        <CollapseToggleButton
+          size="small"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          title={isCollapsed ? '展开提示词' : '收起提示词'}
+        >
+          {isCollapsed ? <ExpandMore /> : <ExpandLess />}
+        </CollapseToggleButton>
+        <PromptScrollContainer $collapsed={isCollapsed}>
+          <div>
+            {promptButtons.map((button, index) => (
+              <PromptChip
+                key={index}
+                label={button.label}
+                icon={button.icon}
+                onClick={() => handlePromptChipClick(button.prompt, index)}
+                disabled={isStreaming}
+                clickable
+                className={selectedPrompt === index ? 'Mui-selected' : ''}
+              />
+            ))}
+          </div>
+        </PromptScrollContainer>
+      </PromptContainerWrapper>
       
       <InputContainer 
         elevation={0} 

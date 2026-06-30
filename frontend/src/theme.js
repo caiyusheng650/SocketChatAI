@@ -6,6 +6,12 @@ export const colors = {
   secondary: '#f3d84b',    // 主题色2 - 金黄色
   accent: '#c15c54',       // 主题色3 - 深珊瑚色
   background: '#fcf5e8',   // 背景色 - 浅米色
+  bubble: {
+    userBg: '#b06b6b',        // 用户气泡 - 砖红/低饱和玫瑰，柔和有色感
+    userText: '#faf0f0',      // 用户气泡文字 - 暖白，护眼清晰
+    assistantBg: '#e0dcc4',   // AI气泡 - 浅橄榄黄，弱化色块冲击
+    assistantText: '#4a4a4a', // AI气泡文字 - 深灰
+  },
   text: {
     primary: '#333333',
     secondary: '#666666',

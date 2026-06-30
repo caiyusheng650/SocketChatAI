@@ -1,5 +1,5 @@
 // API服务文件，用于处理与后端的通信
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001'; // 从环境变量读取API地址，默认端口与后端保持一致
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://caiyusheng325.cn:729'; // 从环境变量读取API地址，默认端口与后端保持一致
 
 // 处理API响应
 const handleResponse = async (response) => {

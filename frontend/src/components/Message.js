@@ -54,41 +54,46 @@ const Message = ({ message, isUser, timestamp, type, isSynced = false }) => {
           // 自定义代码块样式
           
           code({node, inline, className, children, ...props}) {
-            // 检查是否为代码块（通过反引号数量或className判断）
             const isCodeBlock = className || (children && children[0] && children[0].value && children[0].value.includes('\n'));
             
-            // 获取文本内容
             const textContent = children && children[0] ? children[0].value : '';
             
-            // 如果是代码块（多行代码或有语言标识）
             if (isCodeBlock || (textContent && textContent.includes('\n'))) {
               return (
                 <pre 
                   style={{ 
-                    backgroundColor: 'rgba(0, 0, 0, 0.05)', 
-                    padding: '12px', 
-                    borderRadius: '6px',
+                    backgroundColor: isUser ? 'rgba(255, 255, 255, 0.13)' : 'rgba(0, 0, 0, 0.05)', 
+                    padding: '14px 16px', 
+                    borderRadius: '8px',
                     whiteSpace: 'pre-wrap',
                     fontFamily: 'monospace',
-                    overflowX: 'auto'
+                    overflowX: 'auto',
+                    border: isUser ? '1px solid rgba(255, 240, 240, 0.25)' : '1px solid rgba(0, 0, 0, 0.1)',
+                    margin: '12px 0'
                   }}
                 >
-                  <code {...props}>
+                  <code 
+                    style={{ 
+                      fontSize: '0.85rem', 
+                      lineHeight: 1.6 
+                    }} 
+                    {...props}
+                  >
                     {children}
                   </code>
                 </pre>
               );
             } else {
-              // 否则渲染为内联代码样式
               return (
                 <code 
                   style={{ 
-                    backgroundColor: 'rgba(0, 0, 0, 0.05)', 
-                    padding: '2px 4px', 
+                    backgroundColor: isUser ? 'rgba(255, 255, 255, 0.13)' : 'rgba(0, 0, 0, 0.05)', 
+                    padding: '2px 6px', 
                     borderRadius: '4px',
                     fontFamily: 'monospace',
-                    fontWeight: 'bold',  // 添加strong效果
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'  // 添加轻微阴影增强视觉效果
+                    fontWeight: 'bold',
+                    border: isUser ? '1px solid rgba(255, 240, 240, 0.25)' : '1px solid rgba(0, 0, 0, 0.1)',
+                    fontSize: '0.9rem'
                   }} 
                   {...props}
                 >
@@ -102,7 +107,7 @@ const Message = ({ message, isUser, timestamp, type, isSynced = false }) => {
             return (
               <a 
                 style={{ 
-                  color: isUser ? '#e0e0e0' : colors.primary, 
+                  color: isUser ? '#ffe0e0' : colors.primary,
                   textDecoration: 'underline' 
                 }} 
                 {...props}
@@ -134,7 +139,7 @@ const Message = ({ message, isUser, timestamp, type, isSynced = false }) => {
             return (
               <blockquote 
                 style={{ 
-                  borderLeft: `3px solid ${isUser ? 'rgba(255, 255, 255, 0.3)' : colors.primary}`, 
+                  borderLeft: `3px solid ${isUser ? 'rgba(255, 240, 240, 0.4)' : colors.primary}`,
                   paddingLeft: '16px', 
                   margin: '8px 0',
                   fontStyle: 'italic'
@@ -151,7 +156,7 @@ const Message = ({ message, isUser, timestamp, type, isSynced = false }) => {
                   width: '100%', 
                   borderCollapse: 'collapse', 
                   margin: '12px 0',
-                  border: `1px solid ${isUser ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`
+                  border: `1px solid ${isUser ? 'rgba(255, 240, 240, 0.3)' : 'rgba(0, 0, 0, 0.1)'}`
                 }} 
                 {...props}
               />
@@ -162,8 +167,8 @@ const Message = ({ message, isUser, timestamp, type, isSynced = false }) => {
               <th 
                 style={{ 
                   padding: '8px 12px', 
-                  borderBottom: `1px solid ${isUser ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`,
-                  backgroundColor: isUser ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.03)',
+                  borderBottom: `1px solid ${isUser ? 'rgba(255, 240, 240, 0.3)' : 'rgba(0, 0, 0, 0.1)'}`,
+                  backgroundColor: isUser ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.03)',
                   textAlign: 'left'
                 }} 
                 {...props}
@@ -175,7 +180,7 @@ const Message = ({ message, isUser, timestamp, type, isSynced = false }) => {
               <td 
                 style={{ 
                   padding: '8px 12px', 
-                  borderBottom: `1px solid ${isUser ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`
+                  borderBottom: `1px solid ${isUser ? 'rgba(255, 240, 240, 0.3)' : 'rgba(0, 0, 0, 0.1)'}`
                 }} 
                 {...props}
               />
@@ -191,7 +196,7 @@ const Message = ({ message, isUser, timestamp, type, isSynced = false }) => {
   // 根据消息类型获取背景色
   const getBackgroundColor = () => {
     if (isUser) {
-      return colors.primary;
+      return colors.bubble.userBg;
     }
     
     switch (type) {
@@ -199,14 +204,14 @@ const Message = ({ message, isUser, timestamp, type, isSynced = false }) => {
         return '#f0f0f0'; // 系统消息使用浅灰色背景
       case 'assistant':
       default:
-        return colors.secondary;
+        return colors.bubble.assistantBg;
     }
   };
 
   // 根据消息类型获取文字颜色
   const getTextColor = () => {
     if (isUser) {
-      return 'white';
+      return colors.bubble.userText;
     }
     
     switch (type) {
@@ -214,7 +219,7 @@ const Message = ({ message, isUser, timestamp, type, isSynced = false }) => {
         return '#666'; // 系统消息使用深灰色文字
       case 'assistant':
       default:
-        return colors.accent;
+        return colors.bubble.assistantText;
     }
   };
 
